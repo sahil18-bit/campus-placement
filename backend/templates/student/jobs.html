@@ -75,7 +75,7 @@
       </div>
 
       <div class="job-card-footer">
-        <span class="text-small text-muted">Posted {{ job.created_at[:10] }}</span>
+        <span class="text-small text-muted">Posted {{ job.created_at.strftime('%Y-%m-%d') }}</span>
         <a href="{{ url_for('student.job_detail', job_id=job.id) }}" class="btn btn-primary btn-sm">
           {{ 'View' if job.applied else 'View & Apply' }} →
         </a>
