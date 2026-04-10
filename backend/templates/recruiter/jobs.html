@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Manage Jobs{% endblock %}
+{% block page_title %}Manage Jobs{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('recruiter.create_job') }}" class="btn btn-primary btn-sm">+ Post New Job</a>
+{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('recruiter.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('recruiter.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Hiring</div>
+  <a href="{{ url_for('recruiter.jobs') }}" class="nav-link active"><span class="nav-icon">💼</span> Manage Jobs</a>
+  <a href="{{ url_for('recruiter.create_job') }}" class="nav-link"><span class="nav-icon">➕</span> Post Job</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">All Job Postings</div>
+    <div class="section-sub">{{ jobs|length }} job{{ 's' if jobs|length != 1 }}</div>
+  </div>
+</div>
+
+{% if jobs %}
+  <div class="card" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Job Title</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Applicants</th>
+            <th>Deadline</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+          <tr>
+            <td>
+              <div class="fw-600" style="font-size:.88rem;">{{ job.title }}</div>
+              <div class="text-muted text-small">{{ job.company }}</div>
+            </td>
+            <td><span class="tag">{{ job.job_type }}</span></td>
+            <td class="text-small text-muted">{{ job.location }}</td>
+            <td>
+              <a href="{{ url_for('recruiter.applicants', job_id=job.id) }}" style="color:var(--indigo); font-weight:600; font-size:.85rem;">
+                {{ job.applicant_count }} applicant{{ 's' if job.applicant_count != 1 }}
+              </a>
+            </td>
+            <td class="text-small font-mono">{{ job.deadline or '—' }}</td>
+            <td>
+              <span class="badge badge-{{ 'active' if job.is_active else 'inactive' }}">
+                {{ 'Active' if job.is_active else 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <a href="{{ url_for('recruiter.applicants', job_id=job.id) }}" class="btn btn-outline btn-sm">👥 Applicants</a>
+                <form method="POST" action="{{ url_for('recruiter.toggle_job', job_id=job.id) }}" style="display:inline;">
+                  <button type="submit" class="btn btn-sm {{ 'btn-amber' if job.is_active else 'btn-emerald' }}">
+                    {{ '⏸️ Deactivate' if job.is_active else '▶️ Activate' }}
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('recruiter.delete_job', job_id=job.id) }}" style="display:inline;" onsubmit="return confirm('Delete this job? This cannot be undone.');">
+                  <button type="submit" class="btn btn-rose btn-sm">🗑️ Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">💼</div>
+      <div class="empty-text">You haven't posted any jobs yet.</div>
+      <a href="{{ url_for('recruiter.create_job') }}" class="btn btn-primary">Post Your First Job</a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

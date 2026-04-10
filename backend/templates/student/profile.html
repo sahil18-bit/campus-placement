@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block page_title %}My Profile{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link active"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Jobs</div>
+  <a href="{{ url_for('student.jobs') }}" class="nav-link"><span class="nav-icon">💼</span> Browse Jobs</a>
+  <a href="{{ url_for('student.applications') }}" class="nav-link"><span class="nav-icon">📋</span> My Applications</a>
+  <a href="{{ url_for('student.interviews') }}" class="nav-link"><span class="nav-icon">📅</span> Interviews</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns:1fr 1.8fr; gap:20px; align-items:start;">
+
+  <!-- Profile Card -->
+  <div class="card" style="text-align:center;">
+    <div style="width:72px; height:72px; background:var(--indigo); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700; color:#fff; margin:0 auto 12px;">
+      {{ user.name[0].upper() }}
+    </div>
+    <div class="fw-600" style="font-size:1.1rem;">{{ user.name }}</div>
+    <div class="text-muted text-small mt-1">{{ user.email }}</div>
+    {% if profile and profile.college %}
+      <div class="text-small mt-1">{{ profile.college }}</div>
+    {% endif %}
+    {% if profile and profile.branch %}
+      <div class="tag" style="display:inline-block; margin-top:8px;">{{ profile.branch }}</div>
+    {% endif %}
+    {% if profile and profile.cgpa %}
+      <div class="mt-3" style="background:var(--emerald-light); border-radius:var(--radius-sm); padding:8px; color:var(--emerald);">
+        <span class="fw-600">CGPA: {{ profile.cgpa }}</span>
+      </div>
+    {% endif %}
+
+    <hr class="divider">
+
+    <!-- Resume Section -->
+    <div class="text-small fw-600 mb-2" style="text-align:left;">📄 Resume</div>
+    {% if profile and profile.resume_path %}
+      <div style="background:var(--emerald-light); border-radius:var(--radius-sm); padding:10px; text-align:left; margin-bottom:12px;">
+        <div class="text-small" style="color:var(--emerald);">✅ Resume uploaded</div>
+        <div class="text-small text-muted font-mono mt-1" style="word-break:break-all;">{{ profile.resume_path }}</div>
+      </div>
+    {% else %}
+      <div style="background:var(--amber-light); border-radius:var(--radius-sm); padding:10px; text-align:left; margin-bottom:12px;">
+        <div class="text-small" style="color:var(--amber);">⚠️ No resume uploaded</div>
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('student.upload_resume') }}" enctype="multipart/form-data">
+      <div class="form-group">
+        <input type="file" name="resume" accept=".pdf" class="form-control" required>
+        <div class="form-hint">PDF only, max 5 MB</div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-sm">
+        📤 {{ 'Update' if profile and profile.resume_path else 'Upload' }} Resume
+      </button>
+    </form>
+  </div>
+
+  <!-- Edit Form -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Edit Profile</div>
+    </div>
+    <form method="POST" action="{{ url_for('student.profile') }}">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="name" class="form-control" value="{{ user.name }}" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="text" name="phone" class="form-control" value="{{ profile.phone or '' if profile else '' }}" placeholder="9876543210">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CGPA</label>
+          <input type="number" name="cgpa" class="form-control" step="0.01" min="0" max="10" value="{{ profile.cgpa or '' if profile else '' }}" placeholder="8.5">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">College / University</label>
+        <input type="text" name="college" class="form-control" value="{{ profile.college or '' if profile else '' }}" placeholder="IIT Bombay">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Degree</label>
+          <select name="degree" class="form-control">
+            <option value="">-- Select --</option>
+            {% for d in ['B.Tech', 'M.Tech', 'BCA', 'MCA', 'B.Sc', 'M.Sc', 'MBA', 'B.E', 'M.E'] %}
+              <option value="{{ d }}" {{ 'selected' if profile and profile.degree == d }}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Branch</label>
+          <input type="text" name="branch" class="form-control" value="{{ profile.branch or '' if profile else '' }}" placeholder="Computer Science">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Skills (comma-separated)</label>
+        <input type="text" name="skills" class="form-control" value="{{ profile.skills or '' if profile else '' }}" placeholder="Python, Flask, SQL, Machine Learning">
+        <div class="form-hint">Add your key technical and soft skills</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

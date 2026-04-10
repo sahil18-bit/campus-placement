@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}All Jobs{% endblock %}
+{% block page_title %}Job Monitor{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Admin</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-link"><span class="nav-icon">👥</span> All Users</a>
+  <a href="{{ url_for('admin.users', role='recruiter') }}" class="nav-link"><span class="nav-icon">🏢</span> Recruiters</a>
+  <a href="{{ url_for('admin.users', role='student') }}" class="nav-link"><span class="nav-icon">🎓</span> Students</a>
+  <a href="{{ url_for('admin.jobs') }}" class="nav-link active"><span class="nav-icon">💼</span> All Jobs</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">All Job Postings</div>
+    <div class="section-sub">{{ jobs|length }} total job{{ 's' if jobs|length != 1 }}</div>
+  </div>
+</div>
+
+{% if jobs %}
+  <div class="card" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Posted By</th>
+            <th>Type</th>
+            <th>Applicants</th>
+            <th>Deadline</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for job in jobs %}
+          <tr>
+            <td>
+              <div class="fw-600" style="font-size:.87rem;">{{ job.title }}</div>
+              <div class="text-muted text-small">{{ job.location }}</div>
+            </td>
+            <td class="text-small">{{ job.company or '—' }}</td>
+            <td class="text-small text-muted">{{ job.recruiter_name }}</td>
+            <td><span class="tag">{{ job.job_type }}</span></td>
+            <td class="text-small font-mono">{{ job.applicant_count }}</td>
+            <td class="text-small font-mono text-muted">{{ job.deadline or '—' }}</td>
+            <td>
+              <span class="badge badge-{{ 'active' if job.is_active else 'inactive' }}">
+                {{ 'Active' if job.is_active else 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" action="{{ url_for('admin.toggle_job', job_id=job.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm {{ 'btn-amber' if job.is_active else 'btn-emerald' }}">
+                  {{ '⏸️ Deactivate' if job.is_active else '▶️ Activate' }}
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">💼</div>
+      <div class="empty-text">No jobs in the system yet.</div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

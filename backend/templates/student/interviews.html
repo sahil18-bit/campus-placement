@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}My Interviews{% endblock %}
+{% block page_title %}Scheduled Interviews{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Jobs</div>
+  <a href="{{ url_for('student.jobs') }}" class="nav-link"><span class="nav-icon">💼</span> Browse Jobs</a>
+  <a href="{{ url_for('student.applications') }}" class="nav-link"><span class="nav-icon">📋</span> My Applications</a>
+  <a href="{{ url_for('student.interviews') }}" class="nav-link active"><span class="nav-icon">📅</span> Interviews</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">Interview Schedule</div>
+    <div class="section-sub">{{ interviews|length }} interview{{ 's' if interviews|length != 1 }} scheduled</div>
+  </div>
+</div>
+
+{% if interviews %}
+  {% for iv in interviews %}
+    {% set parts = iv.interview_date.split('-') %}
+    <div class="interview-card">
+      <div class="interview-date-box">
+        <div class="iday">{{ parts[2] }}</div>
+        <div class="imon">{{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parts[1]|int - 1] }}</div>
+        <div class="imon" style="margin-top:2px;">{{ parts[0] }}</div>
+      </div>
+      <div style="flex:1;">
+        <div class="fw-600" style="font-size:1rem;">{{ iv.title }}</div>
+        <div class="text-muted text-small mb-2">{{ iv.company }}</div>
+        <div style="display:flex; flex-wrap:wrap; gap:12px; font-size:.82rem;">
+          <span>⏰ <strong>{{ iv.interview_time }}</strong></span>
+          <span>🖥️ {{ iv.mode }}</span>
+          {% if iv.location %}<span>📍 {{ iv.location }}</span>{% endif %}
+          <span>👤 Recruiter: {{ iv.recruiter_name }}</span>
+        </div>
+        {% if iv.notes %}
+          <div class="mt-2" style="background:var(--surface-2); border-radius:var(--radius-sm); padding:8px 12px; font-size:.82rem; color:var(--text-2);">
+            📝 <strong>Notes:</strong> {{ iv.notes }}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <div class="empty-text">No interviews scheduled yet.<br>Keep applying to get shortlisted!</div>
+      <a href="{{ url_for('student.jobs') }}" class="btn btn-primary mt-2">Browse Jobs</a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

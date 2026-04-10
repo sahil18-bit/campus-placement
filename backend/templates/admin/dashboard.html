@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block page_title %}Admin Panel{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Admin</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link active"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-link"><span class="nav-icon">👥</span> All Users</a>
+  <a href="{{ url_for('admin.users', role='recruiter') }}" class="nav-link"><span class="nav-icon">🏢</span> Recruiters</a>
+  <a href="{{ url_for('admin.users', role='student') }}" class="nav-link"><span class="nav-icon">🎓</span> Students</a>
+  <a href="{{ url_for('admin.jobs') }}" class="nav-link"><span class="nav-icon">💼</span> All Jobs</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- System Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon indigo">🎓</div>
+    <div class="stat-value">{{ total_students }}</div>
+    <div class="stat-label">Students</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon sky">🏢</div>
+    <div class="stat-value">{{ total_recruiters }}</div>
+    <div class="stat-label">Recruiters</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber">⏳</div>
+    <div class="stat-value">{{ pending_recs }}</div>
+    <div class="stat-label">Pending Approval</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon emerald">💼</div>
+    <div class="stat-value">{{ active_jobs }}</div>
+    <div class="stat-label">Active Jobs</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon rose">📋</div>
+    <div class="stat-value">{{ total_apps }}</div>
+    <div class="stat-label">Applications</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon sky">📅</div>
+    <div class="stat-value">{{ total_interviews }}</div>
+    <div class="stat-label">Interviews</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+  <!-- Pending Recruiter Approvals -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">⏳ Pending Approvals</div>
+      <a href="{{ url_for('admin.users', role='recruiter') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    {% if pending_recruiters %}
+      {% for rec in pending_recruiters %}
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 0; border-bottom:1px solid var(--border);">
+          <div>
+            <div class="fw-600" style="font-size:.87rem;">{{ rec.name }}</div>
+            <div class="text-muted text-small">{{ rec.email }}</div>
+            {% if rec.company %}<div class="text-small">🏢 {{ rec.company }}{% if rec.designation %}, {{ rec.designation }}{% endif %}</div>{% endif %}
+          </div>
+          <div style="display:flex; gap:6px;">
+            <form method="POST" action="{{ url_for('admin.approve_recruiter', user_id=rec.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="approve">
+              <button type="submit" class="btn btn-emerald btn-sm">✅ Approve</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.approve_recruiter', user_id=rec.id) }}" style="display:inline;">
+              <input type="hidden" name="action" value="reject">
+              <button type="submit" class="btn btn-rose btn-sm">❌ Reject</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state" style="padding:24px;">
+        <div class="empty-icon">✅</div>
+        <div class="empty-text">No pending approvals.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Application Status Breakdown -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">📊 Application Status</div>
+    </div>
+    {% set status_colors = {'Applied': 'sky', 'Shortlisted': 'amber', 'Selected': 'emerald', 'Rejected': 'rose'} %}
+    {% if status_counts %}
+      {% for row in status_counts %}
+        {% set pct = ((row.cnt / total_apps * 100) | int) if total_apps > 0 else 0 %}
+        <div style="margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+            <span class="badge badge-{{ row.status.lower() }}">{{ row.status }}</span>
+            <span class="text-small text-muted font-mono">{{ row.cnt }} ({{ pct }}%)</span>
+          </div>
+          <div style="background:var(--surface-2); border-radius:999px; height:6px; overflow:hidden;">
+            <div style="width:{{ pct }}%; background:var(--indigo); height:100%; border-radius:999px; transition:width .4s;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><div class="empty-text">No application data yet.</div></div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Recent Activity -->
+<div class="card mt-4">
+  <div class="card-header">
+    <div class="card-title">🕐 Recent Activity</div>
+  </div>
+  {% if recent_apps %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Student</th><th>Job</th><th>Company</th><th>Status</th><th>Applied At</th></tr>
+        </thead>
+        <tbody>
+          {% for app in recent_apps %}
+          <tr>
+            <td class="fw-600" style="font-size:.85rem;">{{ app.student_name }}</td>
+            <td class="text-small">{{ app.title }}</td>
+            <td class="text-small text-muted">{{ app.company }}</td>
+            <td><span class="badge badge-{{ app.status.lower() }}">{{ app.status }}</span></td>
+            <td class="text-small font-mono text-muted">{{ app.applied_at[:16] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state"><div class="empty-text">No activity yet.</div></div>
+  {% endif %}
+</div>
+
+{% endblock %}

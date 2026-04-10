@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Schedule Interview{% endblock %}
+{% block page_title %}Schedule Interview{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('recruiter.applicants', job_id=app.job_id) }}" class="btn btn-outline btn-sm">← Back to Applicants</a>
+{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('recruiter.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('recruiter.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Hiring</div>
+  <a href="{{ url_for('recruiter.jobs') }}" class="nav-link active"><span class="nav-icon">💼</span> Manage Jobs</a>
+  <a href="{{ url_for('recruiter.create_job') }}" class="nav-link"><span class="nav-icon">➕</span> Post Job</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:600px;">
+
+  <!-- Candidate Summary -->
+  <div class="card mb-4" style="background:var(--indigo-light); border-color:#c7d2fe;">
+    <div style="display:flex; gap:14px; align-items:center;">
+      <div style="width:50px; height:50px; background:var(--indigo); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.3rem; flex-shrink:0;">
+        {{ app.student_name[0].upper() }}
+      </div>
+      <div>
+        <div class="fw-600" style="color:var(--indigo);">{{ app.student_name }}</div>
+        <div class="text-small" style="color:#4338ca;">{{ app.student_email }}</div>
+        <div class="text-small mt-1" style="color:#4338ca;">
+          Applying for: <strong>{{ app.job_title }}</strong> at {{ app.company }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Form -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        {{ '📅 Reschedule Interview' if existing else '📅 Schedule Interview' }}
+      </div>
+    </div>
+
+    {% if existing %}
+      <div class="alert alert-info mb-3">
+        ℹ️ An interview is already scheduled for {{ existing.interview_date }} at {{ existing.interview_time }}. You can update it below.
+      </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('recruiter.schedule_interview', app_id=app.id) }}">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Interview Date *</label>
+          <input type="date" name="interview_date" class="form-control"
+            value="{{ existing.interview_date if existing else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Interview Time *</label>
+          <input type="time" name="interview_time" class="form-control"
+            value="{{ existing.interview_time if existing else '' }}" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Mode</label>
+          <select name="mode" class="form-control">
+            {% for mode in ['Online', 'In-person', 'Phone'] %}
+              <option value="{{ mode }}" {{ 'selected' if existing and existing.mode == mode }}>{{ mode }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Meeting Link</label>
+          <input type="text" name="location" class="form-control"
+            value="{{ existing.location if existing else '' }}"
+            placeholder="Zoom link or office address">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes for Candidate</label>
+        <textarea name="notes" class="form-control" rows="3"
+          placeholder="Any specific instructions, documents to bring, round details...">{{ existing.notes if existing else '' }}</textarea>
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <button type="submit" class="btn btn-primary btn-lg">
+          📅 {{ 'Update Interview' if existing else 'Schedule Interview' }}
+        </button>
+        <a href="{{ url_for('recruiter.applicants', job_id=app.job_id) }}" class="btn btn-outline btn-lg">Cancel</a>
+      </div>
+      <div class="form-hint mt-2">
+        ✅ Scheduling will automatically shortlist this candidate.
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

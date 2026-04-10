@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}{{ job.title }}{% endblock %}
+{% block page_title %}Job Detail{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('student.jobs') }}" class="btn btn-outline btn-sm">← Back to Jobs</a>
+{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Jobs</div>
+  <a href="{{ url_for('student.jobs') }}" class="nav-link active"><span class="nav-icon">💼</span> Browse Jobs</a>
+  <a href="{{ url_for('student.applications') }}" class="nav-link"><span class="nav-icon">📋</span> My Applications</a>
+  <a href="{{ url_for('student.interviews') }}" class="nav-link"><span class="nav-icon">📅</span> Interviews</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns:2fr 1fr; gap:20px; align-items:start;">
+
+  <!-- Job Details -->
+  <div>
+    <div class="card mb-3">
+      <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
+        <div style="width:60px; height:60px; background:var(--indigo-light); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:1.8rem; flex-shrink:0;">🏢</div>
+        <div>
+          <h1 style="font-size:1.4rem; font-weight:700; letter-spacing:-.4px; margin-bottom:4px;">{{ job.title }}</h1>
+          <div style="color:var(--text-2); font-weight:500;">{{ job.company }}</div>
+          <div class="job-meta mt-2">
+            <span>📍 {{ job.location }}</span>
+            <span>🗂️ {{ job.job_type }}</span>
+            {% if job.salary %}<span>💰 {{ job.salary }}</span>{% endif %}
+            {% if job.deadline %}<span>📅 Deadline: {{ job.deadline }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if job.description %}
+        <div class="mb-4">
+          <div class="fw-600 mb-2" style="font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; color:var(--text-3); font-family:var(--mono);">Description</div>
+          <div style="font-size:.88rem; line-height:1.7; color:var(--text-2);">{{ job.description }}</div>
+        </div>
+      {% endif %}
+
+      {% if job.requirements %}
+        <div>
+          <div class="fw-600 mb-2" style="font-size:.85rem; text-transform:uppercase; letter-spacing:.5px; color:var(--text-3); font-family:var(--mono);">Requirements</div>
+          <div class="job-tags" style="flex-wrap:wrap;">
+            {% for req in job.requirements.split(',') %}
+              <span class="tag">{{ req.strip() }}</span>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Apply Form -->
+    {% if not applied %}
+    <div class="card">
+      <div class="card-title mb-3">📝 Apply for this Position</div>
+      <form method="POST" action="{{ url_for('student.apply', job_id=job.id) }}">
+        <div class="form-group">
+          <label class="form-label">Cover Letter (optional)</label>
+          <textarea name="cover_letter" class="form-control" rows="4" placeholder="Briefly explain why you're a great fit for this role..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">🚀 Submit Application</button>
+      </form>
+    </div>
+    {% else %}
+    <div class="card" style="background:var(--emerald-light); border-color:#a7f3d0;">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span style="font-size:2rem;">✅</span>
+        <div>
+          <div class="fw-600" style="color:var(--emerald);">Application Submitted</div>
+          <div class="text-small" style="color:#065f46;">
+            Status: <span class="badge badge-{{ applied.status.lower() }}">{{ applied.status }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Sidebar Info -->
+  <div>
+    <div class="card">
+      <div class="card-title mb-3">Company Info</div>
+      <div style="font-size:.85rem; display:flex; flex-direction:column; gap:10px;">
+        <div><span class="text-muted">Company:</span> <span class="fw-600">{{ job.company }}</span></div>
+        <div><span class="text-muted">Posted by:</span> {{ job.recruiter_name }}</div>
+        <div><span class="text-muted">Type:</span> {{ job.job_type }}</div>
+        <div><span class="text-muted">Location:</span> {{ job.location }}</div>
+        {% if job.salary %}<div><span class="text-muted">Salary:</span> {{ job.salary }}</div>{% endif %}
+        {% if job.deadline %}<div><span class="text-muted">Deadline:</span> {{ job.deadline }}</div>{% endif %}
+        <div><span class="text-muted">Posted:</span> {{ job.created_at[:10] }}</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

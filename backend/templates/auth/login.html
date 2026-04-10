@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — CampusHire</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="auth-page">
+
+  <!-- Left Branding Panel -->
+  <div class="auth-left">
+    <div class="auth-left-brand">
+      <div class="logo-icon">🎓</div>
+      <div class="brand">CampusHire</div>
+    </div>
+    <div class="auth-left-hero">
+      <h1>Your Career Starts Here</h1>
+      <p>Connect top students with leading companies. A smarter, faster campus placement experience for everyone.</p>
+    </div>
+    <div class="auth-left-stats">
+      <div class="auth-stat">
+        <div class="auth-stat-val">500+</div>
+        <div class="auth-stat-lbl">Students</div>
+      </div>
+      <div class="auth-stat">
+        <div class="auth-stat-val">80+</div>
+        <div class="auth-stat-lbl">Companies</div>
+      </div>
+      <div class="auth-stat">
+        <div class="auth-stat-val">300+</div>
+        <div class="auth-stat-lbl">Placed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Login Form -->
+  <div class="auth-right">
+    <div class="auth-box">
+      <h2>Welcome back</h2>
+      <p class="auth-sub">Sign in to your account to continue.</p>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <!-- Role Selector -->
+      <div class="role-tabs" id="roleTabs">
+        <button class="role-tab active" onclick="setRole('student', this)">🎓 Student</button>
+        <button class="role-tab" onclick="setRole('recruiter', this)">🏢 Recruiter</button>
+        <button class="role-tab" onclick="setRole('admin', this)">🛠️ Admin</button>
+      </div>
+
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="role" id="roleInput" value="student">
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:4px;">
+          Sign In →
+        </button>
+      </form>
+
+      <hr class="divider">
+
+      <p class="text-muted text-small" style="text-align:center;">
+        Don't have an account?
+        <a href="{{ url_for('auth.signup') }}" style="color:var(--indigo); font-weight:600;">Create one</a>
+      </p>
+
+      <!-- Sample Credentials -->
+      <div style="margin-top:24px; background:var(--surface-2); border-radius:var(--radius-sm); padding:14px;">
+        <p style="font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--text-3); font-family:var(--mono); margin-bottom:10px;">Sample Credentials</p>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:.75rem; font-family:var(--mono);">
+          <div>🎓 <strong>Student:</strong> student@college.edu / student123</div>
+          <div>🏢 <strong>Recruiter:</strong> recruiter@techcorp.com / recruiter123</div>
+          <div>🛠️ <strong>Admin:</strong> admin@campus.edu / admin123</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+function setRole(role, btn) {
+  document.getElementById('roleInput').value = role;
+  document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

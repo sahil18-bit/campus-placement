@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('student.jobs') }}" class="btn btn-primary btn-sm">🔍 Browse Jobs</a>
+{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link active">
+    <span class="nav-icon">📊</span> Dashboard
+  </a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link">
+    <span class="nav-icon">👤</span> My Profile
+  </a>
+
+  <div class="nav-section-label">Jobs</div>
+  <a href="{{ url_for('student.jobs') }}" class="nav-link">
+    <span class="nav-icon">💼</span> Browse Jobs
+  </a>
+  <a href="{{ url_for('student.applications') }}" class="nav-link">
+    <span class="nav-icon">📋</span> My Applications
+  </a>
+  <a href="{{ url_for('student.interviews') }}" class="nav-link">
+    <span class="nav-icon">📅</span> Interviews
+  </a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon indigo">💼</div>
+    <div class="stat-value">{{ total_jobs }}</div>
+    <div class="stat-label">Open Jobs</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon sky">📋</div>
+    <div class="stat-value">{{ applications }}</div>
+    <div class="stat-label">Applied</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber">⭐</div>
+    <div class="stat-value">{{ shortlisted }}</div>
+    <div class="stat-label">Shortlisted</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon emerald">📅</div>
+    <div class="stat-value">{{ interviews_count }}</div>
+    <div class="stat-label">Interviews</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+  <!-- Recent Applications -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Applications</div>
+      <a href="{{ url_for('student.applications') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    {% if recent_apps %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Location</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in recent_apps %}
+            <tr>
+              <td>
+                <div class="fw-600" style="font-size:.85rem;">{{ app.title }}</div>
+                <div class="text-muted text-small">{{ app.company }}</div>
+              </td>
+              <td class="text-muted text-small">{{ app.location }}</td>
+              <td>
+                <span class="badge badge-{{ app.status.lower() }}">{{ app.status }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">No applications yet.</div>
+        <a href="{{ url_for('student.jobs') }}" class="btn btn-primary btn-sm">Browse Jobs</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming Interviews -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Upcoming Interviews</div>
+      <a href="{{ url_for('student.interviews') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    {% if upcoming %}
+      {% for iv in upcoming %}
+        {% set parts = iv.interview_date.split('-') %}
+        <div class="interview-card" style="margin-bottom:12px; padding:14px;">
+          <div class="interview-date-box">
+            <div class="iday">{{ parts[2] }}</div>
+            <div class="imon">{{ ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parts[1]|int - 1] }}</div>
+          </div>
+          <div>
+            <div class="fw-600" style="font-size:.88rem;">{{ iv.title }}</div>
+            <div class="text-muted text-small">{{ iv.company }}</div>
+            <div class="text-small mt-1">⏰ {{ iv.interview_time }} &nbsp;|&nbsp; {{ iv.mode }}</div>
+            {% if iv.venue %}<div class="text-small text-muted">📍 {{ iv.venue }}</div>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div class="empty-text">No interviews scheduled yet.</div>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- Profile Completion Prompt -->
+{% if profile and not profile.resume_path %}
+<div class="card mt-4" style="background:var(--indigo-light); border-color:#c7d2fe;">
+  <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+    <div>
+      <div class="fw-600" style="color:var(--indigo);">📤 Upload your resume</div>
+      <div class="text-small" style="color:#4338ca;">Recruiters can't view your profile without a resume.</div>
+    </div>
+    <a href="{{ url_for('student.profile') }}" class="btn btn-primary btn-sm">Go to Profile →</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

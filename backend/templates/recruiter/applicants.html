@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Applicants — {{ job.title }}{% endblock %}
+{% block page_title %}Applicants: {{ job.title }}{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('recruiter.jobs') }}" class="btn btn-outline btn-sm">← Back to Jobs</a>
+{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('recruiter.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('recruiter.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Hiring</div>
+  <a href="{{ url_for('recruiter.jobs') }}" class="nav-link active"><span class="nav-icon">💼</span> Manage Jobs</a>
+  <a href="{{ url_for('recruiter.create_job') }}" class="nav-link"><span class="nav-icon">➕</span> Post Job</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Job Summary Banner -->
+<div class="card mb-4" style="background:var(--indigo-light); border-color:#c7d2fe; padding:16px 20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <div class="fw-600" style="font-size:1rem; color:var(--indigo);">{{ job.title }}</div>
+      <div class="text-small" style="color:#4338ca;">{{ job.company }} · {{ job.location }} · {{ job.job_type }}</div>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span class="badge badge-{{ 'active' if job.is_active else 'inactive' }}">{{ 'Active' if job.is_active else 'Inactive' }}</span>
+      <span class="text-small font-mono" style="color:#4338ca;">{{ apps|length }} applicant{{ 's' if apps|length != 1 }}</span>
+    </div>
+  </div>
+</div>
+
+{% if apps %}
+  {% for app in apps %}
+  <div class="card mb-3">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+
+      <!-- Student Info -->
+      <div style="display:flex; gap:14px; align-items:flex-start; flex:1; min-width:280px;">
+        <div style="width:44px; height:44px; background:var(--indigo); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; font-size:1.1rem; flex-shrink:0;">
+          {{ app.student_name[0].upper() }}
+        </div>
+        <div>
+          <div class="fw-600" style="font-size:.95rem;">{{ app.student_name }}</div>
+          <div class="text-muted text-small">{{ app.student_email }}</div>
+          <div class="text-small mt-1" style="display:flex; flex-wrap:wrap; gap:10px; color:var(--text-2);">
+            {% if app.college %}<span>🏫 {{ app.college }}</span>{% endif %}
+            {% if app.branch %}<span>📚 {{ app.branch }}</span>{% endif %}
+            {% if app.cgpa %}<span>⭐ CGPA: <strong>{{ app.cgpa }}</strong></span>{% endif %}
+            {% if app.phone %}<span>📞 {{ app.phone }}</span>{% endif %}
+          </div>
+          {% if app.skills %}
+            <div class="job-tags mt-2">
+              {% for skill in app.skills.split(',')[:5] %}
+                <span class="tag">{{ skill.strip() }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right: Status + Actions -->
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:10px;">
+        <span class="badge badge-{{ app.status.lower() }}">
+          {{ '🎯' if app.status == 'Applied' else '⭐' if app.status == 'Shortlisted' else '✅' if app.status == 'Selected' else '❌' }}
+          {{ app.status }}
+        </span>
+        <div class="text-small text-muted font-mono">Applied {{ app.applied_at[:10] }}</div>
+
+        <!-- Interview Badge -->
+        {% if app.interview_date %}
+          <div style="background:var(--emerald-light); border-radius:var(--radius-sm); padding:6px 10px; font-size:.75rem; color:var(--emerald);">
+            📅 Interview: {{ app.interview_date }} at {{ app.interview_time }}
+          </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div style="display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end;">
+          <!-- Resume Download -->
+          {% if app.resume_path %}
+            <a href="{{ url_for('recruiter.download_resume', filename=app.resume_path) }}" class="btn btn-outline btn-sm" target="_blank">
+              📄 Resume
+            </a>
+          {% else %}
+            <span class="btn btn-outline btn-sm" style="opacity:.4; cursor:default;">No Resume</span>
+          {% endif %}
+
+          <!-- Schedule Interview -->
+          <a href="{{ url_for('recruiter.schedule_interview', app_id=app.id) }}" class="btn btn-primary btn-sm">
+            📅 {{ 'Reschedule' if app.interview_date else 'Schedule Interview' }}
+          </a>
+        </div>
+
+        <!-- Status Update Form -->
+        <form method="POST" action="{{ url_for('recruiter.update_status', app_id=app.id) }}" style="display:flex; gap:6px; align-items:center;">
+          <select name="status" class="form-control" style="font-size:.75rem; padding:5px 8px; width:auto;">
+            {% for s in ['Applied', 'Shortlisted', 'Selected', 'Rejected'] %}
+              <option value="{{ s }}" {{ 'selected' if app.status == s }}>{{ s }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-outline btn-sm">Update</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <div class="empty-text">No applications received for this job yet.</div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

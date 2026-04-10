@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Campus Hiring{% endblock %} — CampusHire</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-mark">
+        <div class="logo-icon">🎓</div>
+        <div class="brand-name">CampusHire</div>
+      </div>
+      <div class="brand-sub">Placement Portal</div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ session.user_name[0].upper() if session.user_name else '?' }}</div>
+      <div class="user-name">{{ session.user_name }}</div>
+      <div class="user-role">{{ session.user_role }}</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      {% block sidebar_nav %}{% endblock %}
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="{{ url_for('auth.logout') }}" class="nav-link">
+        <span class="nav-icon">🚪</span> Logout
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content">
+    <div class="topbar">
+      <div class="topbar-title">{% block page_title %}Dashboard{% endblock %}</div>
+      <div class="topbar-actions">{% block topbar_actions %}{% endblock %}</div>
+    </div>
+
+    <div class="page-content">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}">
+              {{ '✅' if category == 'success' else '❌' if category == 'error' else 'ℹ️' }}
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+</div>
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

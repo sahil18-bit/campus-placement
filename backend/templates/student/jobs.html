@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Browse Jobs{% endblock %}
+{% block page_title %}Browse Jobs{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Jobs</div>
+  <a href="{{ url_for('student.jobs') }}" class="nav-link active"><span class="nav-icon">💼</span> Browse Jobs</a>
+  <a href="{{ url_for('student.applications') }}" class="nav-link"><span class="nav-icon">📋</span> My Applications</a>
+  <a href="{{ url_for('student.interviews') }}" class="nav-link"><span class="nav-icon">📅</span> Interviews</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Search Bar -->
+<form method="GET" action="{{ url_for('student.jobs') }}">
+  <div class="search-bar">
+    <input type="text" name="search" class="form-control" placeholder="🔍  Search by title, company, or keywords..." value="{{ search }}">
+    <select name="job_type" class="form-control" style="width:160px; flex:none;">
+      <option value="">All Types</option>
+      {% for jt in ['Full-time', 'Internship', 'Part-time', 'Contract'] %}
+        <option value="{{ jt }}" {{ 'selected' if job_type == jt }}>{{ jt }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="location" class="form-control" style="width:160px; flex:none;" placeholder="📍 Location" value="{{ location }}">
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search or job_type or location %}
+      <a href="{{ url_for('student.jobs') }}" class="btn btn-outline">Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+<div class="section-header">
+  <div>
+    <div class="section-title">Available Positions</div>
+    <div class="section-sub">{{ jobs|length }} job{{ 's' if jobs|length != 1 }} found</div>
+  </div>
+</div>
+
+{% if jobs %}
+  <div class="job-grid">
+    {% for job in jobs %}
+    <div class="job-card">
+      <div class="job-card-header">
+        <div>
+          <div class="job-title">{{ job.title }}</div>
+          <div class="job-company">🏢 {{ job.company }}</div>
+        </div>
+        {% if job.applied %}
+          <span class="badge badge-applied">Applied</span>
+        {% endif %}
+      </div>
+
+      <div class="job-meta">
+        <span>📍 {{ job.location }}</span>
+        <span>💰 {{ job.salary or 'Not specified' }}</span>
+        <span>📅 Deadline: {{ job.deadline or 'Open' }}</span>
+      </div>
+
+      {% if job.description %}
+        <div class="text-small text-muted" style="line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+          {{ job.description }}
+        </div>
+      {% endif %}
+
+      <div class="job-tags">
+        <span class="tag">{{ job.job_type }}</span>
+        {% if job.requirements %}
+          {% for req in job.requirements.split(',')[:2] %}
+            <span class="tag">{{ req.strip() }}</span>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div class="job-card-footer">
+        <span class="text-small text-muted">Posted {{ job.created_at[:10] }}</span>
+        <a href="{{ url_for('student.job_detail', job_id=job.id) }}" class="btn btn-primary btn-sm">
+          {{ 'View' if job.applied else 'View & Apply' }} →
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-text">No jobs found matching your criteria.</div>
+      <a href="{{ url_for('student.jobs') }}" class="btn btn-outline btn-sm">Clear Filters</a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

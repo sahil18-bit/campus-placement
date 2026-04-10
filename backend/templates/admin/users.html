@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}All Users{% endblock %}
+{% block page_title %}User Management{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Admin</div>
+  <a href="{{ url_for('admin.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('admin.users') }}" class="nav-link {{ 'active' if not role_filter }}"><span class="nav-icon">👥</span> All Users</a>
+  <a href="{{ url_for('admin.users', role='recruiter') }}" class="nav-link {{ 'active' if role_filter == 'recruiter' }}"><span class="nav-icon">🏢</span> Recruiters</a>
+  <a href="{{ url_for('admin.users', role='student') }}" class="nav-link {{ 'active' if role_filter == 'student' }}"><span class="nav-icon">🎓</span> Students</a>
+  <a href="{{ url_for('admin.jobs') }}" class="nav-link"><span class="nav-icon">💼</span> All Jobs</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filter Tabs -->
+<div style="display:flex; gap:8px; margin-bottom:20px;">
+  <a href="{{ url_for('admin.users') }}" class="btn {{ 'btn-primary' if not role_filter else 'btn-outline' }} btn-sm">All Users</a>
+  <a href="{{ url_for('admin.users', role='student') }}" class="btn {{ 'btn-primary' if role_filter == 'student' else 'btn-outline' }} btn-sm">🎓 Students</a>
+  <a href="{{ url_for('admin.users', role='recruiter') }}" class="btn {{ 'btn-primary' if role_filter == 'recruiter' else 'btn-outline' }} btn-sm">🏢 Recruiters</a>
+</div>
+
+<div class="section-header">
+  <div>
+    <div class="section-title">
+      {% if role_filter == 'student' %}Students
+      {% elif role_filter == 'recruiter' %}Recruiters
+      {% else %}All Users{% endif %}
+    </div>
+    <div class="section-sub">{{ users|length }} user{{ 's' if users|length != 1 }}</div>
+  </div>
+</div>
+
+{% if users %}
+  <div class="card" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Company / Details</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr>
+            <td>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:32px; height:32px; border-radius:50%; background:var(--indigo); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:.8rem; flex-shrink:0;">
+                  {{ user.name[0].upper() }}
+                </div>
+                <span class="fw-600" style="font-size:.87rem;">{{ user.name }}</span>
+              </div>
+            </td>
+            <td class="text-small font-mono text-muted">{{ user.email }}</td>
+            <td>
+              <span class="badge {{ 'badge-active' if user.role == 'student' else 'badge-applied' }}">
+                {{ '🎓' if user.role == 'student' else '🏢' }} {{ user.role | capitalize }}
+              </span>
+            </td>
+            <td class="text-small text-muted">{{ user.company or '—' }}</td>
+            <td>
+              {% if user.role == 'student' %}
+                <span class="badge badge-active">Active</span>
+              {% elif user.approved == 0 %}
+                <span class="badge badge-pending">Pending</span>
+              {% elif user.approved == 1 %}
+                <span class="badge badge-approved">Approved</span>
+              {% else %}
+                <span class="badge badge-rejected-rec">Rejected</span>
+              {% endif %}
+            </td>
+            <td class="text-small font-mono text-muted">{{ user.created_at[:10] }}</td>
+            <td>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                {% if user.role == 'recruiter' and user.approved == 0 %}
+                  <form method="POST" action="{{ url_for('admin.approve_recruiter', user_id=user.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn btn-emerald btn-sm">✅ Approve</button>
+                  </form>
+                  <form method="POST" action="{{ url_for('admin.approve_recruiter', user_id=user.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn btn-rose btn-sm">❌ Reject</button>
+                  </form>
+                {% elif user.role == 'recruiter' and user.approved == 1 %}
+                  <form method="POST" action="{{ url_for('admin.approve_recruiter', user_id=user.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn btn-amber btn-sm">Revoke</button>
+                  </form>
+                {% elif user.role == 'recruiter' and user.approved == 2 %}
+                  <form method="POST" action="{{ url_for('admin.approve_recruiter', user_id=user.id) }}" style="display:inline;">
+                    <input type="hidden" name="action" value="approve">
+                    <button type="submit" class="btn btn-emerald btn-sm">Re-approve</button>
+                  </form>
+                {% endif %}
+                <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}"
+                  onsubmit="return confirm('Delete {{ user.name }}? This cannot be undone.');" style="display:inline;">
+                  <button type="submit" class="btn btn-rose btn-sm">🗑️</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">👥</div>
+      <div class="empty-text">No users found.</div>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

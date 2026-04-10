@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Recruiter Dashboard{% endblock %}
+{% block page_title %}Recruiter Dashboard{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{{ url_for('recruiter.create_job') }}" class="btn btn-primary btn-sm">+ Post a Job</a>
+{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('recruiter.dashboard') }}" class="nav-link active"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('recruiter.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Hiring</div>
+  <a href="{{ url_for('recruiter.jobs') }}" class="nav-link"><span class="nav-icon">💼</span> Manage Jobs</a>
+  <a href="{{ url_for('recruiter.create_job') }}" class="nav-link"><span class="nav-icon">➕</span> Post Job</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon indigo">💼</div>
+    <div class="stat-value">{{ total_jobs }}</div>
+    <div class="stat-label">Total Jobs</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon emerald">✅</div>
+    <div class="stat-value">{{ active_jobs }}</div>
+    <div class="stat-label">Active Jobs</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon sky">📋</div>
+    <div class="stat-value">{{ total_apps }}</div>
+    <div class="stat-label">Total Applicants</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon amber">⭐</div>
+    <div class="stat-value">{{ shortlisted }}</div>
+    <div class="stat-label">Shortlisted</div>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns:1.2fr 1fr; gap:20px;">
+
+  <!-- Recent Applicants -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Applicants</div>
+    </div>
+    {% if recent_apps %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Student</th><th>Job</th><th>CGPA</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            {% for app in recent_apps %}
+            <tr>
+              <td>
+                <div class="fw-600" style="font-size:.84rem;">{{ app.student_name }}</div>
+                <div class="text-muted text-small">{{ app.branch or '—' }}, {{ app.college or '—' }}</div>
+              </td>
+              <td class="text-small">{{ app.job_title }}</td>
+              <td class="text-small font-mono">{{ app.cgpa or '—' }}</td>
+              <td><span class="badge badge-{{ app.status.lower() }}">{{ app.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">No applicants yet. Post a job to start receiving applications.</div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- My Jobs -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">My Job Postings</div>
+      <a href="{{ url_for('recruiter.jobs') }}" class="btn btn-outline btn-sm">Manage All</a>
+    </div>
+    {% if my_jobs %}
+      {% for job in my_jobs %}
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div>
+            <div class="fw-600" style="font-size:.86rem;">{{ job.title }}</div>
+            <div class="text-muted text-small">{{ job.applicant_count }} applicant{{ 's' if job.applicant_count != 1 }}</div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <span class="badge badge-{{ 'active' if job.is_active else 'inactive' }}">
+              {{ 'Active' if job.is_active else 'Inactive' }}
+            </span>
+            <a href="{{ url_for('recruiter.applicants', job_id=job.id) }}" class="btn btn-outline btn-sm">View</a>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">💼</div>
+        <div class="empty-text">No jobs posted yet.</div>
+        <a href="{{ url_for('recruiter.create_job') }}" class="btn btn-primary btn-sm">Post First Job</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

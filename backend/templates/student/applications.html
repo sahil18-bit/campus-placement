@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}My Applications{% endblock %}
+{% block page_title %}My Applications{% endblock %}
+
+{% block sidebar_nav %}
+  <div class="nav-section-label">Main</div>
+  <a href="{{ url_for('student.dashboard') }}" class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+  <a href="{{ url_for('student.profile') }}" class="nav-link"><span class="nav-icon">👤</span> My Profile</a>
+  <div class="nav-section-label">Jobs</div>
+  <a href="{{ url_for('student.jobs') }}" class="nav-link"><span class="nav-icon">💼</span> Browse Jobs</a>
+  <a href="{{ url_for('student.applications') }}" class="nav-link active"><span class="nav-icon">📋</span> My Applications</a>
+  <a href="{{ url_for('student.interviews') }}" class="nav-link"><span class="nav-icon">📅</span> Interviews</a>
+{% endblock %}
+
+{% block content %}
+
+<div class="section-header">
+  <div>
+    <div class="section-title">All Applications</div>
+    <div class="section-sub">{{ apps|length }} application{{ 's' if apps|length != 1 }}</div>
+  </div>
+  <a href="{{ url_for('student.jobs') }}" class="btn btn-primary btn-sm">+ Apply to More Jobs</a>
+</div>
+
+{% if apps %}
+  <div class="card" style="padding:0;">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Position</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Applied On</th>
+            <th>Status</th>
+            <th>Interview</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in apps %}
+          <tr>
+            <td>
+              <div class="fw-600" style="font-size:.88rem;">{{ app.title }}</div>
+              <div class="text-muted text-small">{{ app.company }}</div>
+            </td>
+            <td><span class="tag">{{ app.job_type }}</span></td>
+            <td class="text-muted text-small">{{ app.location }}</td>
+            <td class="text-small font-mono">{{ app.applied_at[:10] }}</td>
+            <td>
+              <span class="badge badge-{{ app.status.lower() }}">
+                {{ '🎯' if app.status == 'Applied' else '⭐' if app.status == 'Shortlisted' else '✅' if app.status == 'Selected' else '❌' }}
+                {{ app.status }}
+              </span>
+            </td>
+            <td>
+              {% if app.interview_date %}
+                <div class="text-small">📅 {{ app.interview_date }}</div>
+                <div class="text-small text-muted">⏰ {{ app.interview_time }} · {{ app.interview_mode }}</div>
+                {% if app.venue %}<div class="text-small text-muted">📍 {{ app.venue }}</div>{% endif %}
+              {% else %}
+                <span class="text-muted text-small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">📋</div>
+      <div class="empty-text">You haven't applied to any jobs yet.</div>
+      <a href="{{ url_for('student.jobs') }}" class="btn btn-primary">Browse Jobs</a>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}
