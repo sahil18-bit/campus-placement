@@ -47,7 +47,8 @@
             <td class="text-small text-muted">{{ job.recruiter_name }}</td>
             <td><span class="tag">{{ job.job_type }}</span></td>
             <td class="text-small font-mono">{{ job.applicant_count }}</td>
-            <td class="text-small font-mono text-muted">{{ job.deadline or '—' }}</td>
+            <td class="text-small font-mono text-muted">{{ job.deadline.strftime('%Y-%m-%d') if job.deadline else '—' }}
+            </td>
             <td>
               <span class="badge badge-{{ 'active' if job.is_active else 'inactive' }}">
                 {{ 'Active' if job.is_active else 'Inactive' }}
