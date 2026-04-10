@@ -208,8 +208,9 @@ def index():
 # ─────────────────────────────────────────────
 # Run
 # ─────────────────────────────────────────────
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+init_db()
+
 if __name__ == '__main__':
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    init_db()
     print("🚀 Campus Hiring System running at http://localhost:5000")
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
