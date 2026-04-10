@@ -1,14 +1,16 @@
 """
-Authentication Routes
-Handles login, signup, and logout for all user roles.
+Authentication Routes - Updated for PostgreSQL/Supabase
 """
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app, g
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, current_app
 
 auth_bp = Blueprint('auth', __name__)
 
 def get_db():
     return current_app.get_db()
+
+def db_fetchone(cur):
+    return cur.fetchone()
 
 # ─────────────────────────────────────────────
 # LOGIN
@@ -24,26 +26,27 @@ def login():
         role     = request.form.get('role', '')
 
         db = get_db()
-        user = db.execute(
-            "SELECT * FROM users WHERE email = ? AND password = ? AND role = ?",
+        cur = db.cursor()
+        cur.execute(
+            "SELECT * FROM users WHERE email = %s AND password = %s AND role = %s",
             (email, password, role)
-        ).fetchone()
+        )
+        user = cur.fetchone()
+        cur.close()
 
         if not user:
             flash('Invalid credentials. Please check email, password, and role.', 'error')
             return render_template('auth/login.html')
 
-        # Check recruiter approval
         if role == 'recruiter' and user['approved'] != 1:
             status = 'pending admin approval' if user['approved'] == 0 else 'rejected by admin'
             flash(f'Your recruiter account is {status}.', 'error')
             return render_template('auth/login.html')
 
-        # Store user info in session
-        session['user_id']   = user['id']
-        session['user_name'] = user['name']
-        session['user_role'] = user['role']
-        session['user_email']= user['email']
+        session['user_id']    = user['id']
+        session['user_name']  = user['name']
+        session['user_role']  = user['role']
+        session['user_email'] = user['email']
 
         flash(f'Welcome back, {user["name"]}!', 'success')
         return redirect(url_for('auth.dashboard'))
@@ -71,29 +74,37 @@ def signup():
             return render_template('auth/signup.html')
 
         db = get_db()
+        cur = db.cursor()
 
-        # Check if email already exists
-        existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
-        if existing:
+        cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cur.fetchone():
             flash('An account with this email already exists.', 'error')
+            cur.close()
             return render_template('auth/signup.html')
 
-        # Recruiters need admin approval (approved=0), students are auto-approved (approved=1)
         approved = 1 if role == 'student' else 0
 
-        db.execute(
-            "INSERT INTO users (name, email, password, role, approved) VALUES (?, ?, ?, ?, ?)",
+        cur.execute(
+            "INSERT INTO users (name, email, password, role, approved) VALUES (%s, %s, %s, %s, %s)",
             (name, email, password, role, approved)
         )
-        db.commit()
 
-        # Create empty profile record
-        user = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+        user = cur.fetchone()
+
         if role == 'student':
-            db.execute("INSERT OR IGNORE INTO student_profiles (user_id) VALUES (?)", (user['id'],))
+            cur.execute(
+                "INSERT INTO student_profiles (user_id) VALUES (%s) ON CONFLICT (user_id) DO NOTHING",
+                (user['id'],)
+            )
         else:
-            db.execute("INSERT OR IGNORE INTO recruiter_profiles (user_id) VALUES (?)", (user['id'],))
+            cur.execute(
+                "INSERT INTO recruiter_profiles (user_id) VALUES (%s) ON CONFLICT (user_id) DO NOTHING",
+                (user['id'],)
+            )
+
         db.commit()
+        cur.close()
 
         if role == 'recruiter':
             flash('Account created! Please wait for admin approval before logging in.', 'success')
