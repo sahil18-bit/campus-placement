@@ -45,6 +45,7 @@ def close_db(e=None):
 def init_db():
     """Create all tables and seed sample data."""
     conn = psycopg2.connect(DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+    conn.autocommit = True
     cur = conn.cursor()
 
     cur.execute("""
