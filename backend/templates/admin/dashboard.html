@@ -127,7 +127,7 @@
             <td class="text-small">{{ app.title }}</td>
             <td class="text-small text-muted">{{ app.company }}</td>
             <td><span class="badge badge-{{ app.status.lower() }}">{{ app.status }}</span></td>
-            <td class="text-small font-mono text-muted">{{ app.applied_at[:16] }}</td>
+            <td class="text-small font-mono text-muted">{{ app.applied_at.strftime('%Y-%m-%d %H:%M') if app.applied_at else '—' }}</td>
           </tr>
           {% endfor %}
         </tbody>
