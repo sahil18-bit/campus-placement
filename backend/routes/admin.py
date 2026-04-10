@@ -1,6 +1,5 @@
 """
-Admin Routes
-System-wide administration: users, jobs, analytics.
+Admin Routes - Updated for PostgreSQL/Supabase
 """
 
 from flask import (Blueprint, render_template, request, redirect,
@@ -23,44 +22,56 @@ def admin_required(f):
 
 
 # ─────────────────────────────────────────────
-# DASHBOARD (Analytics)
+# DASHBOARD
 # ─────────────────────────────────────────────
 @admin_bp.route('/dashboard')
 @admin_required
 def dashboard():
     db = get_db()
+    cur = db.cursor()
 
-    # System-wide stats
-    total_students   = db.execute("SELECT COUNT(*) FROM users WHERE role='student'").fetchone()[0]
-    total_recruiters = db.execute("SELECT COUNT(*) FROM users WHERE role='recruiter'").fetchone()[0]
-    pending_recs     = db.execute("SELECT COUNT(*) FROM users WHERE role='recruiter' AND approved=0").fetchone()[0]
-    total_jobs       = db.execute("SELECT COUNT(*) FROM jobs").fetchone()[0]
-    active_jobs      = db.execute("SELECT COUNT(*) FROM jobs WHERE is_active=1").fetchone()[0]
-    total_apps       = db.execute("SELECT COUNT(*) FROM applications").fetchone()[0]
-    total_interviews = db.execute("SELECT COUNT(*) FROM interviews").fetchone()[0]
+    cur.execute("SELECT COUNT(*) as cnt FROM users WHERE role='student'")
+    total_students = cur.fetchone()['cnt']
 
-    # Application status breakdown
-    status_counts = db.execute(
-        """SELECT status, COUNT(*) as cnt FROM applications GROUP BY status"""
-    ).fetchall()
+    cur.execute("SELECT COUNT(*) as cnt FROM users WHERE role='recruiter'")
+    total_recruiters = cur.fetchone()['cnt']
 
-    # Pending recruiters
-    pending_recruiters = db.execute(
-        """SELECT u.*, rp.company, rp.designation
-           FROM users u
-           LEFT JOIN recruiter_profiles rp ON rp.user_id = u.id
-           WHERE u.role='recruiter' AND u.approved=0
-           ORDER BY u.created_at DESC"""
-    ).fetchall()
+    cur.execute("SELECT COUNT(*) as cnt FROM users WHERE role='recruiter' AND approved=0")
+    pending_recs = cur.fetchone()['cnt']
 
-    # Recent activity
-    recent_apps = db.execute(
-        """SELECT a.applied_at, a.status, u.name as student_name, j.title, j.company
-           FROM applications a
-           JOIN users u ON a.student_id = u.id
-           JOIN jobs j ON a.job_id = j.id
-           ORDER BY a.applied_at DESC LIMIT 8"""
-    ).fetchall()
+    cur.execute("SELECT COUNT(*) as cnt FROM jobs")
+    total_jobs = cur.fetchone()['cnt']
+
+    cur.execute("SELECT COUNT(*) as cnt FROM jobs WHERE is_active=1")
+    active_jobs = cur.fetchone()['cnt']
+
+    cur.execute("SELECT COUNT(*) as cnt FROM applications")
+    total_apps = cur.fetchone()['cnt']
+
+    cur.execute("SELECT COUNT(*) as cnt FROM interviews")
+    total_interviews = cur.fetchone()['cnt']
+
+    cur.execute("SELECT status, COUNT(*) as cnt FROM applications GROUP BY status")
+    status_counts = cur.fetchall()
+
+    cur.execute("""
+        SELECT u.*, rp.company, rp.designation
+        FROM users u
+        LEFT JOIN recruiter_profiles rp ON rp.user_id = u.id
+        WHERE u.role='recruiter' AND u.approved=0
+        ORDER BY u.created_at DESC
+    """)
+    pending_recruiters = cur.fetchall()
+
+    cur.execute("""
+        SELECT a.applied_at, a.status, u.name as student_name, j.title, j.company
+        FROM applications a
+        JOIN users u ON a.student_id = u.id
+        JOIN jobs j ON a.job_id = j.id
+        ORDER BY a.applied_at DESC LIMIT 8
+    """)
+    recent_apps = cur.fetchall()
+    cur.close()
 
     return render_template('admin/dashboard.html',
         total_students=total_students,
@@ -83,16 +94,19 @@ def dashboard():
 @admin_required
 def users():
     db = get_db()
+    cur = db.cursor()
     role_filter = request.args.get('role', '')
 
     query = "SELECT u.*, rp.company FROM users u LEFT JOIN recruiter_profiles rp ON rp.user_id=u.id WHERE u.role != 'admin'"
     params = []
     if role_filter in ('student', 'recruiter'):
-        query += " AND u.role=?"
+        query += " AND u.role=%s"
         params.append(role_filter)
     query += " ORDER BY u.created_at DESC"
 
-    all_users = db.execute(query, params).fetchall()
+    cur.execute(query, params)
+    all_users = cur.fetchall()
+    cur.close()
     return render_template('admin/users.html', users=all_users, role_filter=role_filter)
 
 
@@ -100,16 +114,18 @@ def users():
 @admin_required
 def approve_recruiter(user_id):
     db = get_db()
-    action = request.form.get('action')  # 'approve' or 'reject'
+    cur = db.cursor()
+    action = request.form.get('action')
 
     if action == 'approve':
-        db.execute("UPDATE users SET approved=1 WHERE id=? AND role='recruiter'", (user_id,))
+        cur.execute("UPDATE users SET approved=1 WHERE id=%s AND role='recruiter'", (user_id,))
         flash('Recruiter approved.', 'success')
     elif action == 'reject':
-        db.execute("UPDATE users SET approved=2 WHERE id=? AND role='recruiter'", (user_id,))
+        cur.execute("UPDATE users SET approved=2 WHERE id=%s AND role='recruiter'", (user_id,))
         flash('Recruiter rejected.', 'success')
 
     db.commit()
+    cur.close()
     return redirect(url_for('admin.users', role='recruiter'))
 
 
@@ -117,8 +133,10 @@ def approve_recruiter(user_id):
 @admin_required
 def delete_user(user_id):
     db = get_db()
-    db.execute("DELETE FROM users WHERE id=? AND role != 'admin'", (user_id,))
+    cur = db.cursor()
+    cur.execute("DELETE FROM users WHERE id=%s AND role != 'admin'", (user_id,))
     db.commit()
+    cur.close()
     flash('User deleted.', 'success')
     return redirect(url_for('admin.users'))
 
@@ -130,17 +148,20 @@ def delete_user(user_id):
 @admin_required
 def jobs():
     db = get_db()
+    cur = db.cursor()
 
-    all_jobs = db.execute(
-        """SELECT j.*, u.name as recruiter_name, rp.company,
-                  COUNT(a.id) as applicant_count
-           FROM jobs j
-           JOIN users u ON j.recruiter_id = u.id
-           LEFT JOIN recruiter_profiles rp ON rp.user_id = u.id
-           LEFT JOIN applications a ON a.job_id = j.id
-           GROUP BY j.id
-           ORDER BY j.created_at DESC"""
-    ).fetchall()
+    cur.execute("""
+        SELECT j.*, u.name as recruiter_name, rp.company,
+               COUNT(a.id) as applicant_count
+        FROM jobs j
+        JOIN users u ON j.recruiter_id = u.id
+        LEFT JOIN recruiter_profiles rp ON rp.user_id = u.id
+        LEFT JOIN applications a ON a.job_id = j.id
+        GROUP BY j.id, u.name, rp.company
+        ORDER BY j.created_at DESC
+    """)
+    all_jobs = cur.fetchall()
+    cur.close()
 
     return render_template('admin/jobs.html', jobs=all_jobs)
 
@@ -149,9 +170,12 @@ def jobs():
 @admin_required
 def toggle_job(job_id):
     db = get_db()
-    job = db.execute("SELECT is_active FROM jobs WHERE id=?", (job_id,)).fetchone()
+    cur = db.cursor()
+    cur.execute("SELECT is_active FROM jobs WHERE id=%s", (job_id,))
+    job = cur.fetchone()
     if job:
-        db.execute("UPDATE jobs SET is_active=? WHERE id=?", (1 - job['is_active'], job_id))
+        cur.execute("UPDATE jobs SET is_active=%s WHERE id=%s", (1 - job['is_active'], job_id))
         db.commit()
         flash('Job status updated.', 'success')
+    cur.close()
     return redirect(url_for('admin.jobs'))
