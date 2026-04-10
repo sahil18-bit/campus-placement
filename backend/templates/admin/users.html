@@ -75,7 +75,7 @@
                 <span class="badge badge-rejected-rec">Rejected</span>
               {% endif %}
             </td>
-            <td class="text-small font-mono text-muted">{{ user.created_at[:10] }}</td>
+            <td class="text-small font-mono text-muted">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '—' }}</td>
             <td>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 {% if user.role == 'recruiter' and user.approved == 0 %}
